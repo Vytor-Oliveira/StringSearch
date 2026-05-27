@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StringSearch · N2 Evoluir — Observabilidade + OpenTelemetry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════ -->
+<header class="header">
+  <div>
+    <div class="header-logo">String<span>Search</span> · N2 Evoluir</div>
+    <div class="header-sub">Padrão Strategy · OpenTelemetry · Observabilidade · Monitoramento</div>
+  </div>
+  <div class="header-badges">
+    <span class="hbadge">Strategy Pattern</span>
+    <span class="hbadge">SearchResult</span>
+    <span class="hbadge otel">OpenTelemetry</span>
+  </div>
+</header>
+
+<!-- ══ TABS ════════════════════════════════════════════════════ -->
+<nav class="tabs-bar">
+  <button class="tab-btn active"   onclick="switchTab('app',    this)">🔍 Busca &amp; Visualização</button>
+  <button class="tab-btn otel-tab" onclick="switchTab('dash',   this)">📊 Dashboard · Observabilidade</button>
+  <button class="tab-btn otel-tab" onclick="switchTab('traces', this)">🔭 Traces &amp; Spans</button>
+  <button class="tab-btn"          onclick="switchTab('about',  this)">📋 Arquitetura</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TAB 1: BUSCA & VISUALIZAÇÃO
+═══════════════════════════════════════════════════════════════ -->
+<div id="tab-app" class="tab-content active">
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="panel">
+      <div class="panel-title">Texto de Entrada</div>
+      <div class="field-group">
+        <span class="field-label">Carregar arquivo(s) .txt</span>
+        <div class="file-row">
+          <label class="file-btn" for="file-input">📂 Abrir</label>
+          <input type="file" id="file-input" accept=".txt,text/plain" multiple />
+          <span id="file-name">Nenhum arquivo</span>
+        </div>
+      </div>
+      <div class="field-group" style="margin-top:8px">
+        <span class="field-label">Ou cole o texto (drag-and-drop suportado)</span>
+        <div id="text-drop-zone">
+          <textarea id="text-area" class="field-textarea"
+            placeholder="Cole o texto aqui ou arraste .txt..."
+            style="height:100px;border:none;outline:none;background:transparent;width:100%"
+          >the quick brown fox jumps over the lazy dog. the dog barked at the fox and the fox ran away. the lazy cat watched the dog chase the fox. then the fox hid behind the tree near the lake.</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Padrão de Busca</div>
+      <div class="field-group">
+        <span class="field-label">String a encontrar (pattern)</span>
+        <input type="text" id="pattern-input" class="field-input" value="the" placeholder="Ex: fox, aba, hello..." />
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Algoritmo (Strategy)</div>
+      <div class="field-group">
+        <span class="field-label">Escolha a estratégia</span>
+        <select id="algo-select" class="field-select">
+          <option value="naive">Naive — Força Bruta</option>
+          <option value="rabin_karp">Rabin-Karp — Hashing</option>
+          <option value="kmp" selected>KMP — Knuth-Morris-Pratt</option>
+          <option value="boyer_moore">Boyer-Moore — Bad Character</option>
+        </select>
+      </div>
+      <div id="algo-info" style="margin-top:10px"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Execução</div>
+      <div class="btn-row">
+        <button id="run-all-btn" class="btn btn-primary">▶ Executar</button>
+        <button id="step-btn"    class="btn btn-secondary">⏭ Passo</button>
+      </div>
+      <div class="btn-row" style="margin-top:6px">
+        <button id="reset-btn" class="btn btn-ghost">↺ Resetar</button>
+      </div>
+      <div style="margin-top:10px">
+        <button id="compare-btn"    class="btn btn-compare">⚡ Comparar Todos os Algoritmos</button>
+        <button id="otel-export-btn" class="btn btn-otel">📡 Exportar Trace (OTEL)</button>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content-area">
+    <div class="log-wrap">
+      <div class="step-bar-wrap">
+        <span id="step-counter">Passo: 0 / 0</span>
+        <div class="progress-track"><div id="progress-bar"></div></div>
+        <span id="otel-status" class="otel-badge" style="display:none">📡 Rastreando</span>
+      </div>
+      <div id="char-highlight"></div>
+      <div id="log-container">
+        <span class="log-placeholder">
+          Os passos aparecerão aqui.<br/>
+          Use "Executar" ou "Passo" para iniciar.<br/>
+          Cada execução gera <b>Traces, Métricas e Logs</b> no Dashboard.
+        </span>
+      </div>
+    </div>
+
+    <div class="metrics-wrap">
+      <div class="panel-title">Métricas · SearchResult</div>
+      <div id="metrics-panel"></div>
+    </div>
+
+    <div id="compare-panel"></div>
+  </main>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TAB 2: DASHBOARD
+═══════════════════════════════════════════════════════════════ -->
+<div id="tab-dash" class="tab-content">
+<div class="dash-layout">
+
+  <div class="otel-card dash-full">
+    <div class="otel-card-title">Contadores Globais · Métricas OpenTelemetry</div>
+    <div class="counter-grid">
+      <div class="counter-card">
+        <div class="counter-val" id="cnt-executions">0</div>
+        <div class="counter-label">Execuções</div>
+      </div>
+      <div class="counter-card c-warn">
+        <div class="counter-val" id="cnt-comparisons">0</div>
+        <div class="counter-label">Comparações Totais</div>
+      </div>
+      <div class="counter-card c-success">
+        <div class="counter-val" id="cnt-matches">0</div>
+        <div class="counter-label">Ocorrências Encontradas</div>
+      </div>
+      <div class="counter-card c-otel">
+        <div class="counter-val" id="cnt-traces">0</div>
+        <div class="counter-label">Spans Emitidos</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="otel-card">
+    <div class="otel-card-title">Tempo de Execução por Algoritmo (ms)</div>
+    <div id="chart-time" class="metrics-bars"></div>
+  </div>
+
+  <div class="otel-card">
+    <div class="otel-card-title">Comparações por Algoritmo</div>
+    <div id="chart-cmp" class="metrics-bars"></div>
+  </div>
+
+  <div class="otel-card dash-full">
+    <div class="otel-card-title">Histórico de Execuções · Trace Timeline</div>
+    <div id="trace-timeline" class="trace-list">
+      <div style="color:var(--text-dim);font-size:11px;padding:20px;text-align:center">
+        Nenhuma execução registrada ainda. Execute uma busca para ver os traces.
+      </div>
+    </div>
+  </div>
+
+  <div class="otel-card dash-full">
+    <div class="otel-card-title">Logs Estruturados · OpenTelemetry</div>
+    <div id="otel-log" class="otel-log">
+      <div style="color:var(--text-dim);font-size:10px;padding:8px">Aguardando eventos...</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TAB 3: TRACES & SPANS
+═══════════════════════════════════════════════════════════════ -->
+<div id="tab-traces" class="tab-content">
+<div class="dash-layout">
+
+  <div class="otel-card dash-full">
+    <div class="otel-card-title">Spans OpenTelemetry · Rastreamento de Execução</div>
+    <div id="span-list" class="span-list">
+      <div style="color:var(--text-dim);font-size:11px;padding:20px;text-align:center">
+        Nenhum span registrado. Execute uma busca para ver o rastreamento.
+      </div>
+    </div>
+  </div>
+
+  <div class="otel-card">
+    <div class="otel-card-title">Atributos do Último Trace</div>
+    <div id="trace-attrs" style="font-size:10px;color:var(--text-dim)">
+      Execute uma busca para ver os atributos do trace.
+    </div>
+  </div>
+
+  <div class="otel-card">
+    <div class="otel-card-title">Exportação OTLP/JSON</div>
+    <div id="trace-export" style="font-size:10px;color:var(--text-dim)">
+      Clique em "Exportar Trace" após executar uma busca.
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     TAB 4: ARQUITETURA
+═══════════════════════════════════════════════════════════════ -->
+<div id="tab-about" class="tab-content">
+<div class="dash-layout">
+
+  <div class="otel-card dash-full">
+    <div class="otel-card-title">Arquitetura · Padrão Strategy + Observabilidade</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:11px;line-height:1.7">
+      <div>
+        <p style="color:var(--accent);font-weight:700;margin-bottom:8px">Padrão Strategy (GoF)</p>
+        <p style="color:var(--text-dim);margin-bottom:6px">Define uma família de algoritmos, encapsula cada um e os torna intercambiáveis.</p>
+        <ul style="color:var(--text);list-style:none;display:flex;flex-direction:column;gap:4px">
+          <li>→ <span style="color:var(--accent2)">SearchStrategy</span> — Interface base</li>
+          <li>→ <span style="color:var(--accent2)">NaiveSearch</span> — ConcreteStrategy</li>
+          <li>→ <span style="color:var(--accent2)">RabinKarpSearch</span> — ConcreteStrategy</li>
+          <li>→ <span style="color:var(--accent2)">KMPSearch</span> — ConcreteStrategy</li>
+          <li>→ <span style="color:var(--accent2)">BoyerMooreSearch</span> — ConcreteStrategy</li>
+          <li>→ <span style="color:var(--accent2)">SearchContext</span> — Context</li>
+          <li>→ <span style="color:var(--accent2)">StrategyFactory</span> — Factory</li>
+        </ul>
+        <p style="color:var(--accent);font-weight:700;margin:12px 0 8px">SearchResult</p>
+        <ul style="color:var(--text);list-style:none;display:flex;flex-direction:column;gap:3px;font-size:10px">
+          <li>→ <code style="color:var(--warning)">algorithmName</code> · <code style="color:var(--warning)">timeMs</code></li>
+          <li>→ <code style="color:var(--warning)">totalComparisons</code> · <code style="color:var(--warning)">occurrences</code></li>
+          <li>→ <code style="color:var(--warning)">positions</code> · <code style="color:var(--warning)">theoreticalComplexity</code></li>
+          <li>→ <code style="color:var(--warning)">traceId</code> · <code style="color:var(--warning)">spanId</code></li>
+        </ul>
+      </div>
+      <div>
+        <p style="color:var(--otel);font-weight:700;margin-bottom:8px">OpenTelemetry (observability/otel.js)</p>
+        <ul style="color:var(--text);list-style:none;display:flex;flex-direction:column;gap:4px">
+          <li>→ <span style="color:var(--otel)">OtelSpan</span> — representa um span</li>
+          <li>→ <span style="color:var(--otel)">OtelTracer</span> — gerencia traces/spans</li>
+          <li>→ <span style="color:var(--otel)">OtelMetrics</span> — contadores, histogramas</li>
+          <li>→ <span style="color:var(--otel)">OtelLogger</span> — logs por severidade</li>
+          <li>→ <span style="color:var(--otel)">OtelExporter</span> — exportação OTLP/JSON</li>
+        </ul>
+        <p style="color:var(--accent3);font-weight:700;margin:12px 0 8px">Estrutura de Arquivos</p>
+        <ul style="color:var(--text);list-style:none;display:flex;flex-direction:column;gap:3px;font-size:10px;font-family:var(--mono)">
+          <li style="color:var(--text-dim)">backend/ — lógica de servidor (futuro)</li>
+          <li>css/styles.css</li>
+          <li>js/algorithms.js — Strategy + SearchResult</li>
+          <li>js/app.js — AppController + Dashboard</li>
+          <li>observability/otel.js — OTel SDK</li>
+          <li>docker-compose.yml — Jaeger + Prometheus</li>
+          <li>index.html</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="otel-card">
+    <div class="otel-card-title">Análise Teórica vs Prática</div>
+    <div id="theory-analysis" style="font-size:10px;display:flex;flex-direction:column;gap:6px">
+      <div style="color:var(--text-dim)">Execute comparações para ver a análise.</div>
+    </div>
+  </div>
+
+  <div class="otel-card">
+    <div class="otel-card-title">Boas Práticas Implementadas</div>
+    <div style="font-size:10px;color:var(--text);display:flex;flex-direction:column;gap:5px">
+      <div>✅ Padrão Strategy — algoritmos intercambiáveis</div>
+      <div>✅ SearchResult — retorno estruturado e tipado</div>
+      <div>✅ StrategyFactory — criação centralizada</div>
+      <div>✅ Generators — execução passo a passo eficiente</div>
+      <div>✅ Separação UI / Lógica / Observabilidade</div>
+      <div>✅ OtelTracer — spans hierárquicos por execução</div>
+      <div>✅ OtelMetrics — contadores e histogramas</div>
+      <div>✅ OtelLogger — logs estruturados por severidade</div>
+      <div>✅ OtelExporter — exportação OTLP/JSON</div>
+      <div>✅ Dashboard — visualização de monitoramento</div>
+      <div>✅ docker-compose — Jaeger + Prometheus prontos</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script src="observability/otel.js"></script>
+<script src="js/algorithms.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

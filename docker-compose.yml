@@ -1,0 +1,59 @@
+version: '3.8'
+
+# ============================================================
+#  docker-compose.yml — Stack de Observabilidade
+#  StringSearch Visualizer N2 Evoluir
+#
+#  Serviços:
+#   - jaeger      → UI de traces (http://localhost:16686)
+#   - prometheus  → métricas (http://localhost:9090)
+#   - otel-collector → recebe OTLP e encaminha
+# ============================================================
+
+services:
+
+  # ── Jaeger — visualização de traces ────────────────────────
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    container_name: jaeger
+    ports:
+      - "16686:16686"   # UI
+      - "14268:14268"   # HTTP collector (recebe spans)
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: unless-stopped
+
+  # ── Prometheus — coleta de métricas ────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=7d'
+    restart: unless-stopped
+
+  # ── OpenTelemetry Collector ─────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.91.0
+    container_name: otel-collector
+    ports:
+      - "4319:4317"     # OTLP gRPC (externo → collector)
+      - "4320:4318"     # OTLP HTTP (externo → collector)
+      - "8888:8888"     # métricas do próprio collector
+      - "8889:8889"     # exporter prometheus
+    volumes:
+      - ./observability/otel-collector.yml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      - jaeger
+      - prometheus
+    restart: unless-stopped
+
+networks:
+  default:
+    name: stringsearch-observability
