@@ -1,0 +1,58 @@
+Algoritmos de Busca em Strings
+
+A busca em strings é um dos problemas mais fundamentais da ciência da computação.
+Dado um texto T de comprimento n e um padrão P de comprimento m, o objetivo é
+encontrar todas as ocorrências de P dentro de T de forma eficiente.
+
+O algoritmo mais simples é a busca ingênua, também chamada de força bruta.
+A busca ingênua compara o padrão com cada posição do texto, caractere por caractere.
+No pior caso, a busca ingênua realiza O(n * m) comparações, o que pode ser muito
+custoso para textos grandes ou padrões com muita repetição interna.
+
+O algoritmo de Knuth-Morris-Pratt, abreviado como KMP, foi desenvolvido em 1977.
+O KMP pré-processa o padrão para construir uma tabela auxiliar chamada tabela LPS.
+LPS significa Longest Proper Prefix which is also Suffix, ou seja, o maior prefixo
+próprio que também é sufixo. Com a tabela LPS, o KMP evita retrocessos no texto,
+garantindo complexidade O(n + m) tanto no pré-processamento quanto na busca.
+O KMP é especialmente eficiente quando o padrão contém muitas repetições internas.
+
+O algoritmo de Boyer-Moore é considerado um dos mais eficientes na prática.
+Boyer-Moore compara o padrão da direita para a esquerda, o que vai contra a intuição.
+A heurística Bad Character do Boyer-Moore permite saltos maiores quando há mismatch.
+No melhor caso, Boyer-Moore realiza apenas O(n / m) comparações, sublinear em n.
+Isso significa que Boyer-Moore pode pular partes do texto sem nem as examinar.
+Boyer-Moore é o algoritmo preferido em editores de texto como grep e vim.
+
+O algoritmo de Rabin-Karp usa uma função de hash para comparar janelas do texto.
+Em vez de comparar caractere a caractere, Rabin-Karp calcula o hash da janela atual
+e compara com o hash do padrão. Se os hashes coincidirem, faz a verificação completa.
+O rolling hash permite recalcular o hash da nova janela em tempo O(1).
+A complexidade média do Rabin-Karp é O(n + m), similar ao KMP.
+Rabin-Karp é particularmente útil para buscar múltiplos padrões simultaneamente.
+
+Comparação de desempenho entre os algoritmos:
+
+Algoritmo       | Pré-processamento | Busca         | Espaço
+----------------|-------------------|---------------|--------
+Naive           | O(1)              | O(n * m)      | O(1)
+KMP             | O(m)              | O(n)          | O(m)
+Boyer-Moore     | O(m + sigma)      | O(n / m)      | O(sigma)
+Rabin-Karp      | O(m)              | O(n + m) med  | O(1)
+
+onde sigma representa o tamanho do alfabeto utilizado.
+
+A escolha do algoritmo depende do contexto de aplicação:
+- Use Naive para textos pequenos ou padrões muito curtos (overhead zero).
+- Use KMP quando o padrão tem muita repetição interna (ex: "ababab").
+- Use Boyer-Moore para padrões longos e alfabetos grandes (ex: busca em inglês).
+- Use Rabin-Karp quando precisar buscar múltiplos padrões ao mesmo tempo.
+
+Em aplicações modernas como editores de código, ferramentas de busca como grep,
+antivírus e sistemas de detecção de plágio, o Boyer-Moore e suas variantes são
+os algoritmos mais utilizados por seu excelente desempenho médio.
+
+O padrão de projeto Strategy é ideal para implementar esses algoritmos em OOP.
+O Strategy permite trocar o algoritmo em tempo de execução sem alterar o cliente.
+Cada algoritmo encapsula sua lógica em uma classe concreta que implementa a interface.
+O contexto delega a execução para a estratégia selecionada, sem conhecer os detalhes.
+Isso torna o código extensível: adicionar um novo algoritmo não modifica o código existente.
